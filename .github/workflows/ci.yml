@@ -14,11 +14,21 @@ jobs:
     timeout-minutes: 5
     runs-on: ubuntu-latest
     services:
-      clickhouse:
-        image: clickhouse/clickhouse-server:23.3
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
         ports:
-          - 9000:9000
-          - 8123:8123
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
     container:
       image: ghcr.io/a-poliakov/jaffle_shop_dbtvault:ci
     steps:
@@ -26,5 +36,4 @@ jobs:
       - run: dbt --version
       - run: dbt debug --target ci
       - run: dbt deps --target ci
-      - run: dbt run-operation init_s3_sources --target ci
       - run: dbt build --target ci
